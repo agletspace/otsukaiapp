@@ -5,7 +5,10 @@ import "./Pages.css";
 
 // Gemini APIで音声テキストをスーパーの商品名に変換する
 const convertWithGemini = async (text) => {
+  console.log("=== Gemini変換開始 ===");
+  console.log("変換前テキスト:", text);
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  console.log("APIキー存在確認:", apiKey ? "あり(" + apiKey.substring(0,8) + "...)" : "なし");
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   const prompt = `あなたはスーパーマーケットの買い物リストアシスタントです。
@@ -30,6 +33,7 @@ const convertWithGemini = async (text) => {
   });
 
   const data = await response.json();
+  console.log("Geminiレスポンス:", JSON.stringify(data));
   const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
   return result || text;
 };
@@ -67,16 +71,29 @@ export function CreateList() {
     }
   }, [items]);
 
-  // テキスト入力からの追加（Gemini変換なし）
-  const addItemDirect = (name) => {
+  // テキスト入力からの追加（デバッグ用：Gemini変換あり）
+  const addItemDirect = async (name) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    push(ref(db, "items"), {
-      name: trimmed,
-      checked: false,
-      createdAt: Date.now(),
-    });
-    setItemName("");
+    setConverting(true);
+    try {
+      const converted = await convertWithGemini(trimmed);
+      push(ref(db, "items"), {
+        name: converted.trim(),
+        checked: false,
+        createdAt: Date.now(),
+      });
+    } catch (e) {
+      console.error("Geminiエラー:", e);
+      push(ref(db, "items"), {
+        name: trimmed,
+        checked: false,
+        createdAt: Date.now(),
+      });
+    } finally {
+      setConverting(false);
+      setItemName("");
+    }
   };
 
   // 音声入力からの追加（Gemini変換あり）
