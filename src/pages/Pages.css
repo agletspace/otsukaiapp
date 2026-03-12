@@ -205,32 +205,28 @@ body {
   color: #999;
 }
 
-.item-qty {
-  background: #d8f3dc;
-  color: #2d6a4f;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.item.checked .item-qty {
-  background: #e0e0e0;
-  color: #999;
-}
-
 .delete-btn {
-  background: none;
+  background: #fee2e2;
   border: none;
-  color: #ccc;
-  font-size: 0.95rem;
+  color: #e63946;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
   touch-action: manipulation;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
 }
 
-.delete-btn:active { background: #fee2e2; color: #e63946; }
+.delete-btn:active {
+  background: #fecaca;
+  transform: scale(0.95);
+}
 
 /* アクションボタン */
 .action-buttons {
@@ -252,6 +248,7 @@ body {
 
 .reset-btn { background: #fff3cd; color: #856404; }
 .clear-btn { background: #fee2e2; color: #c0392b; }
+.clear-btn.confirm { background: #e63946; color: white; }
 .reset-btn:active, .clear-btn:active { opacity: 0.75; }
 
 /* ─── チェック画面（iPhone用） ─── */
@@ -393,20 +390,5 @@ body {
 
 .check-item.checked .check-name {
   text-decoration: line-through;
-  color: #999;
-}
-
-.check-qty {
-  background: #e3f2fd;
-  color: #1a6fa8;
-  padding: 5px 12px;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.check-item.checked .check-qty {
-  background: #e0e0e0;
   color: #999;
 }

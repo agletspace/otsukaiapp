@@ -9,9 +9,9 @@ import "./Pages.css";
 export function CreateList() {
   const [items, setItems] = useState([]);
   const [itemName, setItemName] = useState("");
-  const [itemQty, setItemQty] = useState("");
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
   const recognitionRef = useRef(null);
 
   useEffect(() => {
@@ -28,26 +28,29 @@ export function CreateList() {
     return () => unsubscribe();
   }, []);
 
-  const addItem = (name, qty) => {
+  const addItem = (name) => {
     const trimmedName = name.trim();
-    const trimmedQty = qty.trim() || "1つ";
     if (!trimmedName) return;
     push(ref(db, "items"), {
       name: trimmedName,
-      qty: trimmedQty,
       checked: false,
       createdAt: Date.now(),
     });
     setItemName("");
-    setItemQty("");
     setTranscript("");
   };
 
   const handleDelete = (id) => remove(ref(db, `items/${id}`));
 
+  // 全削除：確認ボタン方式（window.confirmはiOSで動かないため）
   const handleClearAll = () => {
-    if (window.confirm("リストをすべて削除しますか？")) {
+    if (confirmClear) {
       items.forEach((item) => remove(ref(db, `items/${item.id}`)));
+      setConfirmClear(false);
+    } else {
+      setConfirmClear(true);
+      // 3秒後に確認状態をリセット
+      setTimeout(() => setConfirmClear(false), 3000);
     }
   };
 
@@ -55,14 +58,6 @@ export function CreateList() {
     items.forEach((item) =>
       update(ref(db, `items/${item.id}`), { checked: false })
     );
-  };
-
-  const parseVoiceInput = (text) => {
-    const parts = text.trim().split(/[\s　]+/);
-    if (parts.length >= 2) {
-      return { name: parts.slice(0, -1).join(""), qty: parts[parts.length - 1] };
-    }
-    return { name: text.trim(), qty: "1つ" };
   };
 
   const startListening = () => {
@@ -82,8 +77,7 @@ export function CreateList() {
       const text = result[0].transcript;
       setTranscript(text);
       if (result.isFinal) {
-        const { name, qty } = parseVoiceInput(text);
-        addItem(name, qty);
+        addItem(text);
       }
     };
     recognition.onerror = () => setListening(false);
@@ -119,27 +113,19 @@ export function CreateList() {
             <span>{listening ? "話しかけてください…" : "押して話す"}</span>
           </button>
           {transcript && <div className="transcript">「{transcript}」</div>}
-          <p className="voice-hint">例：「たまご　1パック」「牛乳　2本」</p>
+          <p className="voice-hint">例：「たまご」「牛乳」「醤油」</p>
         </section>
 
         <section className="card">
           <div className="input-row">
             <input
               type="text"
-              placeholder="商品名"
+              placeholder="商品名を入力"
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addItem(itemName, itemQty)}
+              onKeyDown={(e) => e.key === "Enter" && addItem(itemName)}
             />
-            <input
-              type="text"
-              placeholder="個数（例：2本）"
-              value={itemQty}
-              onChange={(e) => setItemQty(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addItem(itemName, itemQty)}
-              className="qty-input"
-            />
-            <button className="add-btn" onClick={() => addItem(itemName, itemQty)}>追加</button>
+            <button className="add-btn" onClick={() => addItem(itemName)}>追加</button>
           </div>
         </section>
 
@@ -155,7 +141,6 @@ export function CreateList() {
                 <li key={item.id} className={`item ${item.checked ? "checked" : ""}`}>
                   <span className="item-status">{item.checked ? "✅" : "⬜️"}</span>
                   <span className="item-name">{item.name}</span>
-                  <span className="item-qty">{item.qty}</span>
                   <button className="delete-btn" onClick={() => handleDelete(item.id)}>✕</button>
                 </li>
               ))}
@@ -166,7 +151,12 @@ export function CreateList() {
         {items.length > 0 && (
           <div className="action-buttons">
             <button className="reset-btn" onClick={handleResetChecks}>チェックをリセット</button>
-            <button className="clear-btn" onClick={handleClearAll}>リストを全削除</button>
+            <button
+              className={`clear-btn ${confirmClear ? "confirm" : ""}`}
+              onClick={handleClearAll}
+            >
+              {confirmClear ? "本当に削除する？" : "リストを全削除"}
+            </button>
           </div>
         )}
       </main>
@@ -239,7 +229,6 @@ export function CheckList() {
                 </div>
                 <div className="check-info">
                   <span className="check-name">{item.name}</span>
-                  <span className="check-qty">{item.qty}</span>
                 </div>
               </li>
             ))}
