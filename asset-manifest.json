@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/otsukaiapp/static/css/main.e24df5e4.css",
+    "main.js": "/otsukaiapp/static/js/main.f3d4d627.js",
+    "index.html": "/otsukaiapp/index.html",
+    "main.e24df5e4.css.map": "/otsukaiapp/static/css/main.e24df5e4.css.map",
+    "main.f3d4d627.js.map": "/otsukaiapp/static/js/main.f3d4d627.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e24df5e4.css",
+    "static/js/main.f3d4d627.js"
+  ]
+}
