@@ -3,42 +3,35 @@ import { db } from "../firebase";
 import { ref, push, onValue, remove, update } from "firebase/database";
 import "./Pages.css";
 
-// 食品優先の変換辞書
-const FOOD_DICT = {
-  "さとう": "砂糖", "しお": "塩", "しょうゆ": "醤油", "みそ": "味噌",
-  "こしょう": "胡椒", "さけ": "酒", "みりん": "みりん", "す": "酢",
-  "こめ": "米", "こむぎこ": "小麦粉", "かたくりこ": "片栗粉",
-  "ぎゅうにゅう": "牛乳", "たまご": "卵", "バター": "バター",
-  "チーズ": "チーズ", "ヨーグルト": "ヨーグルト", "なっとう": "納豆",
-  "とうふ": "豆腐", "あぶらあげ": "油揚げ", "こんにゃく": "こんにゃく",
-  "にく": "肉", "ぶたにく": "豚肉", "とりにく": "鶏肉", "ぎゅうにく": "牛肉",
-  "さかな": "魚", "まぐろ": "マグロ", "さけ": "鮭", "さんま": "さんま",
-  "えび": "エビ", "いか": "イカ", "たこ": "タコ",
-  "キャベツ": "キャベツ", "たまねぎ": "玉ねぎ", "にんじん": "にんじん",
-  "じゃがいも": "じゃがいも", "トマト": "トマト", "きゅうり": "きゅうり",
-  "ほうれんそう": "ほうれん草", "こまつな": "小松菜", "ねぎ": "ねぎ",
-  "にんにく": "にんにく", "しょうが": "しょうが", "だいこん": "大根",
-  "ごぼう": "ごぼう", "れんこん": "れんこん", "さつまいも": "さつまいも",
-  "りんご": "りんご", "バナナ": "バナナ", "みかん": "みかん",
-  "ぶどう": "ぶどう", "いちご": "いちご", "もも": "もも",
-  "パン": "パン", "しょくパン": "食パン", "うどん": "うどん",
-  "そば": "そば", "パスタ": "パスタ", "ラーメン": "ラーメン",
-  "ごはん": "ご飯", "おにぎり": "おにぎり",
-  "コーヒー": "コーヒー", "おちゃ": "お茶", "ジュース": "ジュース",
-  "みず": "水", "ビール": "ビール",
-  "ティッシュ": "ティッシュ", "トイレットペーパー": "トイレットペーパー",
-  "シャンプー": "シャンプー", "せっけん": "石けん",
-};
+// Gemini APIで音声テキストをスーパーの商品名に変換する
+const convertWithGemini = async (text) => {
+  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-const convertToFood = (text) => {
-  const lower = text.trim();
-  // 辞書に完全一致するものがあれば変換
-  if (FOOD_DICT[lower]) return FOOD_DICT[lower];
-  // ひらがな読みで一致するものを探す
-  for (const [key, value] of Object.entries(FOOD_DICT)) {
-    if (lower === key) return value;
-  }
-  return text.trim();
+  const prompt = `あなたはスーパーマーケットの買い物リストアシスタントです。
+以下の音声認識テキストをスーパーで購入できる商品名に変換してください。
+
+ルール：
+- 商品名のみを返してください（余計な説明は不要）
+- 人名などに誤変換されていたら食品名に直してください（例：「佐藤」→「砂糖」）
+- 数量が含まれる場合はそのまま残してください
+
+音声認識テキスト：「${text}」
+
+商品名：`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 100 },
+    }),
+  });
+
+  const data = await response.json();
+  const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  return result || text;
 };
 
 // ─────────────────────────────────────────
@@ -48,7 +41,7 @@ export function CreateList() {
   const [items, setItems] = useState([]);
   const [itemName, setItemName] = useState("");
   const [listening, setListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
+  const [converting, setConverting] = useState(false); // ローディング状態
   const listRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -68,23 +61,47 @@ export function CreateList() {
     return () => unsubscribe();
   }, []);
 
-  // アイテム追加時にリストの末尾にスクロール
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [items]);
 
-  const addItem = (name) => {
-    const converted = convertToFood(name);
-    if (!converted) return;
+  // テキスト入力からの追加（Gemini変換なし）
+  const addItemDirect = (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     push(ref(db, "items"), {
-      name: converted,
+      name: trimmed,
       checked: false,
       createdAt: Date.now(),
     });
     setItemName("");
-    setTranscript("");
+  };
+
+  // 音声入力からの追加（Gemini変換あり）
+  const addItemWithGemini = async (text) => {
+    setConverting(true);
+    try {
+      const converted = await convertWithGemini(text);
+      const trimmed = converted.trim();
+      if (trimmed) {
+        push(ref(db, "items"), {
+          name: trimmed,
+          checked: false,
+          createdAt: Date.now(),
+        });
+      }
+    } catch (e) {
+      // Gemini失敗時はそのまま追加
+      push(ref(db, "items"), {
+        name: text.trim(),
+        checked: false,
+        createdAt: Date.now(),
+      });
+    } finally {
+      setConverting(false);
+    }
   };
 
   const handleDelete = (id) => remove(ref(db, `items/${id}`));
@@ -107,17 +124,13 @@ export function CreateList() {
     }
     const recognition = new SpeechRecognition();
     recognition.lang = "ja-JP";
-    recognition.interimResults = true;
+    recognition.interimResults = false; // 最終結果のみ取得
     recognitionRef.current = recognition;
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
     recognition.onresult = (event) => {
-      const result = event.results[event.results.length - 1];
-      const text = result[0].transcript;
-      setTranscript(text);
-      if (result.isFinal) {
-        addItem(text);
-      }
+      const text = event.results[0][0].transcript;
+      addItemWithGemini(text); // Geminiで変換してから追加
     };
     recognition.onerror = () => setListening(false);
     recognition.start();
@@ -141,19 +154,26 @@ export function CreateList() {
       </header>
 
       <main className="create-main">
-        {/* 上部固定エリア：音声・テキスト入力 */}
         <div className="fixed-top">
           <section className="card voice-section">
-            <button
-              className={`voice-btn ${listening ? "listening" : ""}`}
-              onPointerDown={startListening}
-              onPointerUp={stopListening}
-              onPointerLeave={stopListening}
-            >
-              <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
-              <span>{listening ? "話しかけてください…" : "押して話す"}</span>
-            </button>
-            {transcript && <div className="transcript">「{transcript}」</div>}
+            {/* ローディング中はスピナーを表示 */}
+            {converting ? (
+              <div className="converting-indicator">
+                <span className="spinner">⏳</span>
+                <span>追加中...</span>
+              </div>
+            ) : (
+              <button
+                className={`voice-btn ${listening ? "listening" : ""}`}
+                onPointerDown={startListening}
+                onPointerUp={stopListening}
+                onPointerLeave={stopListening}
+                disabled={converting}
+              >
+                <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
+                <span>{listening ? "話しかけてください…" : "押して話す"}</span>
+              </button>
+            )}
             <p className="voice-hint">例：「たまご」「牛乳」「砂糖」</p>
           </section>
 
@@ -164,14 +184,13 @@ export function CreateList() {
                 placeholder="商品名を入力"
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addItem(itemName)}
+                onKeyDown={(e) => e.key === "Enter" && addItemDirect(itemName)}
               />
-              <button className="add-btn" onClick={() => addItem(itemName)}>追加</button>
+              <button className="add-btn" onClick={() => addItemDirect(itemName)}>追加</button>
             </div>
           </section>
         </div>
 
-        {/* スクロール可能なリストエリア */}
         <section className="card list-card">
           {items.length === 0 ? (
             <div className="empty-state">
