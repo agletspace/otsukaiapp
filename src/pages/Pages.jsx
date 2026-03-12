@@ -3,6 +3,44 @@ import { db } from "../firebase";
 import { ref, push, onValue, remove, update } from "firebase/database";
 import "./Pages.css";
 
+// 食品優先の変換辞書
+const FOOD_DICT = {
+  "さとう": "砂糖", "しお": "塩", "しょうゆ": "醤油", "みそ": "味噌",
+  "こしょう": "胡椒", "さけ": "酒", "みりん": "みりん", "す": "酢",
+  "こめ": "米", "こむぎこ": "小麦粉", "かたくりこ": "片栗粉",
+  "ぎゅうにゅう": "牛乳", "たまご": "卵", "バター": "バター",
+  "チーズ": "チーズ", "ヨーグルト": "ヨーグルト", "なっとう": "納豆",
+  "とうふ": "豆腐", "あぶらあげ": "油揚げ", "こんにゃく": "こんにゃく",
+  "にく": "肉", "ぶたにく": "豚肉", "とりにく": "鶏肉", "ぎゅうにく": "牛肉",
+  "さかな": "魚", "まぐろ": "マグロ", "さけ": "鮭", "さんま": "さんま",
+  "えび": "エビ", "いか": "イカ", "たこ": "タコ",
+  "キャベツ": "キャベツ", "たまねぎ": "玉ねぎ", "にんじん": "にんじん",
+  "じゃがいも": "じゃがいも", "トマト": "トマト", "きゅうり": "きゅうり",
+  "ほうれんそう": "ほうれん草", "こまつな": "小松菜", "ねぎ": "ねぎ",
+  "にんにく": "にんにく", "しょうが": "しょうが", "だいこん": "大根",
+  "ごぼう": "ごぼう", "れんこん": "れんこん", "さつまいも": "さつまいも",
+  "りんご": "りんご", "バナナ": "バナナ", "みかん": "みかん",
+  "ぶどう": "ぶどう", "いちご": "いちご", "もも": "もも",
+  "パン": "パン", "しょくパン": "食パン", "うどん": "うどん",
+  "そば": "そば", "パスタ": "パスタ", "ラーメン": "ラーメン",
+  "ごはん": "ご飯", "おにぎり": "おにぎり",
+  "コーヒー": "コーヒー", "おちゃ": "お茶", "ジュース": "ジュース",
+  "みず": "水", "ビール": "ビール",
+  "ティッシュ": "ティッシュ", "トイレットペーパー": "トイレットペーパー",
+  "シャンプー": "シャンプー", "せっけん": "石けん",
+};
+
+const convertToFood = (text) => {
+  const lower = text.trim();
+  // 辞書に完全一致するものがあれば変換
+  if (FOOD_DICT[lower]) return FOOD_DICT[lower];
+  // ひらがな読みで一致するものを探す
+  for (const [key, value] of Object.entries(FOOD_DICT)) {
+    if (lower === key) return value;
+  }
+  return text.trim();
+};
+
 // ─────────────────────────────────────────
 // iPad用：リスト作成画面
 // ─────────────────────────────────────────
@@ -11,7 +49,7 @@ export function CreateList() {
   const [itemName, setItemName] = useState("");
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [confirmClear, setConfirmClear] = useState(false);
+  const listRef = useRef(null);
   const recognitionRef = useRef(null);
 
   useEffect(() => {
@@ -19,7 +57,9 @@ export function CreateList() {
     const unsubscribe = onValue(itemsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const list = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+        const list = Object.entries(data)
+          .map(([id, val]) => ({ id, ...val }))
+          .sort((a, b) => a.createdAt - b.createdAt);
         setItems(list);
       } else {
         setItems([]);
@@ -28,11 +68,18 @@ export function CreateList() {
     return () => unsubscribe();
   }, []);
 
+  // アイテム追加時にリストの末尾にスクロール
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [items]);
+
   const addItem = (name) => {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
+    const converted = convertToFood(name);
+    if (!converted) return;
     push(ref(db, "items"), {
-      name: trimmedName,
+      name: converted,
       checked: false,
       createdAt: Date.now(),
     });
@@ -42,16 +89,8 @@ export function CreateList() {
 
   const handleDelete = (id) => remove(ref(db, `items/${id}`));
 
-  // 全削除：確認ボタン方式（window.confirmはiOSで動かないため）
   const handleClearAll = () => {
-    if (confirmClear) {
-      items.forEach((item) => remove(ref(db, `items/${item.id}`)));
-      setConfirmClear(false);
-    } else {
-      setConfirmClear(true);
-      // 3秒後に確認状態をリセット
-      setTimeout(() => setConfirmClear(false), 3000);
-    }
+    items.forEach((item) => remove(ref(db, `items/${item.id}`)));
   };
 
   const handleResetChecks = () => {
@@ -102,46 +141,50 @@ export function CreateList() {
       </header>
 
       <main className="create-main">
-        <section className="card voice-section">
-          <button
-            className={`voice-btn ${listening ? "listening" : ""}`}
-            onPointerDown={startListening}
-            onPointerUp={stopListening}
-            onPointerLeave={stopListening}
-          >
-            <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
-            <span>{listening ? "話しかけてください…" : "押して話す"}</span>
-          </button>
-          {transcript && <div className="transcript">「{transcript}」</div>}
-          <p className="voice-hint">例：「たまご」「牛乳」「醤油」</p>
-        </section>
+        {/* 上部固定エリア：音声・テキスト入力 */}
+        <div className="fixed-top">
+          <section className="card voice-section">
+            <button
+              className={`voice-btn ${listening ? "listening" : ""}`}
+              onPointerDown={startListening}
+              onPointerUp={stopListening}
+              onPointerLeave={stopListening}
+            >
+              <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
+              <span>{listening ? "話しかけてください…" : "押して話す"}</span>
+            </button>
+            {transcript && <div className="transcript">「{transcript}」</div>}
+            <p className="voice-hint">例：「たまご」「牛乳」「砂糖」</p>
+          </section>
 
-        <section className="card">
-          <div className="input-row">
-            <input
-              type="text"
-              placeholder="商品名を入力"
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addItem(itemName)}
-            />
-            <button className="add-btn" onClick={() => addItem(itemName)}>追加</button>
-          </div>
-        </section>
+          <section className="card">
+            <div className="input-row">
+              <input
+                type="text"
+                placeholder="商品名を入力"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addItem(itemName)}
+              />
+              <button className="add-btn" onClick={() => addItem(itemName)}>追加</button>
+            </div>
+          </section>
+        </div>
 
-        <section className="card">
+        {/* スクロール可能なリストエリア */}
+        <section className="card list-card">
           {items.length === 0 ? (
             <div className="empty-state">
               <p>リストは空です</p>
               <p>音声または手入力で追加しましょう</p>
             </div>
           ) : (
-            <ul className="item-list">
+            <ul className="item-list" ref={listRef}>
               {items.map((item) => (
                 <li key={item.id} className={`item ${item.checked ? "checked" : ""}`}>
                   <span className="item-status">{item.checked ? "✅" : "⬜️"}</span>
                   <span className="item-name">{item.name}</span>
-                  <button className="delete-btn" onClick={() => handleDelete(item.id)}>✕</button>
+                  <button className="delete-btn" onClick={() => handleDelete(item.id)}>🗑 削除</button>
                 </li>
               ))}
             </ul>
@@ -151,12 +194,7 @@ export function CreateList() {
         {items.length > 0 && (
           <div className="action-buttons">
             <button className="reset-btn" onClick={handleResetChecks}>チェックをリセット</button>
-            <button
-              className={`clear-btn ${confirmClear ? "confirm" : ""}`}
-              onClick={handleClearAll}
-            >
-              {confirmClear ? "本当に削除する？" : "リストを全削除"}
-            </button>
+            <button className="clear-btn" onClick={handleClearAll}>リストを全削除</button>
           </div>
         )}
       </main>

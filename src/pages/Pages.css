@@ -74,6 +74,23 @@ body {
   max-width: 760px;
   margin: 0 auto;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px); /* ヘッダー分を引いた高さ */
+}
+
+/* 上部固定エリア */
+.fixed-top {
+  flex-shrink: 0;
+}
+
+/* スクロール可能なリストカード */
+.list-card {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
 }
 
 /* 音声入力 */
@@ -174,6 +191,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
 }
 
 .item {
@@ -248,7 +268,6 @@ body {
 
 .reset-btn { background: #fff3cd; color: #856404; }
 .clear-btn { background: #fee2e2; color: #c0392b; }
-.clear-btn.confirm { background: #e63946; color: white; }
 .reset-btn:active, .clear-btn:active { opacity: 0.75; }
 
 /* ─── チェック画面（iPhone用） ─── */
