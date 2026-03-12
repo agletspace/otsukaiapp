@@ -1,0 +1,467 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif;
+  background: #f0f4f8;
+}
+
+/* ─── アプリ全体 ─── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── ヘッダー ─── */
+.app-header {
+  background: linear-gradient(135deg, #2d6a4f, #40916c);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(45,106,79,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 1.6rem;
+}
+
+.app-header h1 {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.header-count {
+  background: rgba(255,255,255,0.25);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* ─── タブ ─── */
+.tab-bar {
+  display: flex;
+  background: white;
+  border-bottom: 2px solid #e0e0e0;
+  position: sticky;
+  top: 57px;
+  z-index: 99;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 14px 10px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  touch-action: manipulation;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-btn.active {
+  color: #40916c;
+  border-bottom-color: #40916c;
+}
+
+/* ─── メインコンテンツ ─── */
+.app-main {
+  flex: 1;
+  padding: 16px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ─── カード ─── */
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  margin-bottom: 14px;
+}
+
+/* ─── 音声入力 ─── */
+.voice-section {
+  text-align: center;
+}
+
+.voice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #40916c, #52b788);
+  color: white;
+  font-size: 1.1rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 4px 15px rgba(64,145,108,0.35);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.voice-btn.listening {
+  background: linear-gradient(135deg, #e63946, #ff6b6b);
+  box-shadow: 0 4px 15px rgba(230,57,70,0.4);
+}
+
+.voice-btn:active {
+  transform: scale(0.98);
+}
+
+.voice-icon {
+  font-size: 1.4rem;
+}
+
+.transcript {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #e9f5ee;
+  border-radius: 10px;
+  color: #2d6a4f;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.voice-hint {
+  margin-top: 8px;
+  color: #999;
+  font-size: 0.82rem;
+}
+
+/* ─── テキスト入力 ─── */
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 13px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-row input:focus {
+  border-color: #40916c;
+}
+
+.qty-input {
+  max-width: 120px;
+  flex: none !important;
+}
+
+.add-btn {
+  padding: 13px 18px;
+  background: #40916c;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+
+.add-btn:active {
+  background: #2d6a4f;
+}
+
+/* ─── アイテムリスト（作成ビュー）─── */
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  color: #bbb;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.item-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8faf9;
+  border-radius: 12px;
+  border: 2px solid #e8f4ed;
+}
+
+.item.checked {
+  opacity: 0.55;
+  background: #f4f4f4;
+  border-color: #e0e0e0;
+}
+
+.item-status {
+  font-size: 1.1rem;
+}
+
+.item-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.item.checked .item-name {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.item-qty {
+  background: #d8f3dc;
+  color: #2d6a4f;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.item.checked .item-qty {
+  background: #e0e0e0;
+  color: #999;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  touch-action: manipulation;
+  transition: all 0.15s;
+}
+
+.delete-btn:active {
+  background: #fee2e2;
+  color: #e63946;
+}
+
+/* ─── アクションボタン ─── */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.reset-btn, .clear-btn {
+  flex: 1;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity 0.2s;
+}
+
+.reset-btn {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.clear-btn {
+  background: #fee2e2;
+  color: #c0392b;
+}
+
+.reset-btn:active, .clear-btn:active {
+  opacity: 0.75;
+}
+
+/* ─── チェックビュー ─── */
+.check-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 14px 18px;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+
+.progress-bar {
+  flex: 1;
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #40916c, #52b788);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.progress-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #555;
+  white-space: nowrap;
+}
+
+.all-done-banner {
+  background: linear-gradient(135deg, #2d6a4f, #52b788);
+  color: white;
+  text-align: center;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(45,106,79,0.3);
+}
+
+.check-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* iOS15対応：タップしやすい大きめUI */
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 16px;
+  background: white;
+  border-radius: 16px;
+  border: 2px solid #e3edf7;
+  cursor: pointer;
+  min-height: 70px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  touch-action: manipulation;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.check-item:active {
+  transform: scale(0.97);
+  background: #f0f7ff;
+}
+
+.check-item.checked {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+  opacity: 0.7;
+}
+
+.check-circle {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  border: 3px solid #40916c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  transition: all 0.2s;
+}
+
+.check-item.checked .check-circle {
+  background: #40916c;
+  border-color: #40916c;
+}
+
+.check-mark {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.check-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.check-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.check-item.checked .check-name {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.check-qty {
+  background: #d8f3dc;
+  color: #2d6a4f;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.check-item.checked .check-qty {
+  background: #e0e0e0;
+  color: #999;
+}
