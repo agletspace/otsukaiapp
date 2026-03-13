@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/otsukaiapp/static/css/main.40a3ef89.css",
-    "main.js": "/otsukaiapp/static/js/main.a3b8af07.js",
+    "main.js": "/otsukaiapp/static/js/main.905270bd.js",
     "index.html": "/otsukaiapp/index.html",
     "main.40a3ef89.css.map": "/otsukaiapp/static/css/main.40a3ef89.css.map",
-    "main.a3b8af07.js.map": "/otsukaiapp/static/js/main.a3b8af07.js.map"
+    "main.905270bd.js.map": "/otsukaiapp/static/js/main.905270bd.js.map"
   },
   "entrypoints": [
     "static/css/main.40a3ef89.css",
-    "static/js/main.a3b8af07.js"
+    "static/js/main.905270bd.js"
   ]
 }
