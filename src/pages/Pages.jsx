@@ -140,21 +140,26 @@ export function CreateList() {
     }
     const recognition = new SpeechRecognition();
     recognition.lang = "ja-JP";
-    recognition.interimResults = false; // 最終結果のみ取得
+    recognition.interimResults = false;
+    recognition.continuous = false;
     recognitionRef.current = recognition;
     recognition.onstart = () => setListening(true);
-    recognition.onend = () => setListening(false);
+    recognition.onend = () => {
+      setListening(false);
+    };
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript;
-      addItemWithGemini(text); // Geminiで変換してから追加
+      addItemWithGemini(text);
     };
     recognition.onerror = () => setListening(false);
     recognition.start();
   };
 
+  // ボタンを離したら録音停止してGemini変換を待つ
   const stopListening = () => {
-    recognitionRef.current?.stop();
-    setListening(false);
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
   };
 
   const checkedCount = items.filter((i) => i.checked).length;
