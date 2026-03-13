@@ -6,15 +6,18 @@ import "./Pages.css";
 // Gemini APIで音声テキストをスーパーの商品名に変換する
 const convertWithGemini = async (text) => {
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key=${apiKey}`;
 
   const prompt = `あなたはスーパーマーケットの買い物リストアシスタントです。
-以下の音声認識テキストをスーパーで購入できる商品名に変換してください。
+以下の音声認識テキストをスーパーで購入できる正確な商品名に変換してください。
 
 ルール：
-- 商品名のみを返してください（余計な説明は不要）
-- 人名などに誤変換されていたら食品名に直してください（例：「佐藤」→「砂糖」）
+- 商品名のみを1行で返してください（説明・補足は一切不要）
+- 音声認識の誤変換を修正してください（例：「佐藤」→「砂糖」）
+- 食材・調味料・日用品など、スーパーで売っている商品名に忠実に変換してください
+- 省略や意訳はせず、発言内容に最も近い商品名にしてください
 - 数量が含まれる場合はそのまま残してください
+- 例：「こむぎこ」→「小麦粉」、「かたくりこ」→「片栗粉」、「むぎちゃ」→「麦茶」
 
 音声認識テキスト：「${text}」
 
