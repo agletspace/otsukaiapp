@@ -9,7 +9,7 @@ const convertWithGemini = async (text) => {
   console.log("変換前テキスト:", text);
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
   console.log("APIキー存在確認:", apiKey ? "あり(" + apiKey.substring(0,8) + "...)" : "なし");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
   const prompt = `あなたはスーパーマーケットの買い物リストアシスタントです。
 以下の音声認識テキストをスーパーで購入できる商品名に変換してください。
