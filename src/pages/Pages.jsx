@@ -199,9 +199,11 @@ export function CreateList() {
             ) : (
               <button
                 className={`voice-btn ${listening ? "listening" : ""}`}
-                onPointerDown={startListening}
-                onPointerUp={stopListening}
-                onPointerLeave={stopListening}
+                onTouchStart={(e) => { e.preventDefault(); startListening(); }}
+                onTouchEnd={(e) => { e.preventDefault(); stopListening(); }}
+                onMouseDown={startListening}
+                onMouseUp={stopListening}
+                onMouseLeave={stopListening}
                 disabled={converting}
               >
                 <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
