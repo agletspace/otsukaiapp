@@ -5,11 +5,8 @@ import "./Pages.css";
 
 // Gemini APIで音声テキストをスーパーの商品名に変換する
 const convertWithGemini = async (text) => {
-  console.log("=== Gemini変換開始 ===");
-  console.log("変換前テキスト:", text);
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-  console.log("APIキー存在確認:", apiKey ? "あり(" + apiKey.substring(0,8) + "...)" : "なし");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key=${apiKey}`;
 
   const prompt = `あなたはスーパーマーケットの買い物リストアシスタントです。
 以下の音声認識テキストをスーパーで購入できる商品名に変換してください。
@@ -33,7 +30,6 @@ const convertWithGemini = async (text) => {
   });
 
   const data = await response.json();
-  console.log("Geminiレスポンス:", JSON.stringify(data));
   const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
   return result || text;
 };
