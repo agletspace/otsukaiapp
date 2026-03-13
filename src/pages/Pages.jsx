@@ -142,10 +142,10 @@ export function CreateList() {
     }
     const recognition = new SpeechRecognition();
     recognition.lang = "ja-JP";
-    recognition.interimResults = true; // 途中結果も取得
-    recognition.continuous = true;     // 継続して認識
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.shouldSubmit = false; // ボタンを離したかどうかのフラグ
     recognitionRef.current = recognition;
-    recognition.currentText = "";      // 現在のテキストを保持
 
     recognition.onstart = () => setListening(true);
     recognition.onend = () => {
@@ -153,12 +153,12 @@ export function CreateList() {
       setRecognizing(false);
     };
     recognition.onresult = (event) => {
-      // 途中結果も含めて最新テキストを保持
-      let text = "";
-      for (let i = 0; i < event.results.length; i++) {
-        text += event.results[i][0].transcript;
+      const text = event.results[0][0].transcript;
+      // ボタンを離していたらGeminiに送信、まだ押していたら無視
+      if (recognition.shouldSubmit) {
+        setRecognizing(false);
+        addItemWithGemini(text);
       }
-      recognition.currentText = text;
     };
     recognition.onerror = () => {
       setListening(false);
@@ -167,15 +167,11 @@ export function CreateList() {
     recognition.start();
   };
 
-  // ボタンを離したタイミングで取得済みテキストをGeminiに送信
+  // ボタンを離したら「送信フラグ」を立てるだけ（stop()は呼ばない）
   const stopListening = () => {
     if (recognitionRef.current) {
-      const text = recognitionRef.current.currentText;
-      recognitionRef.current.stop();
-      if (text && text.trim()) {
-        setRecognizing(true);
-        addItemWithGemini(text.trim());
-      }
+      recognitionRef.current.shouldSubmit = true;
+      setRecognizing(true);
     }
   };
 
