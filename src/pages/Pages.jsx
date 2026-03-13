@@ -144,20 +144,20 @@ export function CreateList() {
     recognition.lang = "ja-JP";
     recognition.interimResults = false;
     recognition.continuous = false;
-    recognition.shouldSubmit = false; // ボタンを離したかどうかのフラグ
+    recognition.resultText = ""; // onresultで取得したテキストを保存
     recognitionRef.current = recognition;
 
     recognition.onstart = () => setListening(true);
+    recognition.onresult = (event) => {
+      // テキストを保存するだけ
+      recognition.resultText = event.results[0][0].transcript;
+    };
     recognition.onend = () => {
       setListening(false);
       setRecognizing(false);
-    };
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      // ボタンを離していたらGeminiに送信、まだ押していたら無視
-      if (recognition.shouldSubmit) {
-        setRecognizing(false);
-        addItemWithGemini(text);
+      // 保存されたテキストがあればGeminiに送信
+      if (recognition.resultText) {
+        addItemWithGemini(recognition.resultText);
       }
     };
     recognition.onerror = () => {
@@ -167,11 +167,11 @@ export function CreateList() {
     recognition.start();
   };
 
-  // ボタンを離したら「送信フラグ」を立てるだけ（stop()は呼ばない）
+  // ボタンを離したらstop()を呼ぶ → onendが発火してGeminiに送信
   const stopListening = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.shouldSubmit = true;
       setRecognizing(true);
+      recognitionRef.current.stop();
     }
   };
 
