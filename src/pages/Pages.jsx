@@ -142,18 +142,23 @@ export function CreateList() {
     }
     const recognition = new SpeechRecognition();
     recognition.lang = "ja-JP";
-    recognition.interimResults = false;
-    recognition.continuous = false;
+    recognition.interimResults = true; // 途中結果も取得
+    recognition.continuous = true;     // 継続して認識
     recognitionRef.current = recognition;
+    recognition.currentText = "";      // 現在のテキストを保持
+
     recognition.onstart = () => setListening(true);
     recognition.onend = () => {
       setListening(false);
       setRecognizing(false);
     };
     recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      setRecognizing(false);
-      addItemWithGemini(text);
+      // 途中結果も含めて最新テキストを保持
+      let text = "";
+      for (let i = 0; i < event.results.length; i++) {
+        text += event.results[i][0].transcript;
+      }
+      recognition.currentText = text;
     };
     recognition.onerror = () => {
       setListening(false);
@@ -162,11 +167,15 @@ export function CreateList() {
     recognition.start();
   };
 
-  // ボタンを離したら認識中状態にして結果を待つ
+  // ボタンを離したタイミングで取得済みテキストをGeminiに送信
   const stopListening = () => {
     if (recognitionRef.current) {
-      setRecognizing(true);
+      const text = recognitionRef.current.currentText;
       recognitionRef.current.stop();
+      if (text && text.trim()) {
+        setRecognizing(true);
+        addItemWithGemini(text.trim());
+      }
     }
   };
 
