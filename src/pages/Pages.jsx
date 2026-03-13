@@ -133,8 +133,12 @@ export function CreateList() {
     );
   };
 
-  const startListening = () => {
-    if (listening || converting) return;
+  const toggleListening = () => {
+    if (converting || recognizing) return;
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("このブラウザは音声認識に対応していません。Safariをお使いください。");
@@ -144,7 +148,6 @@ export function CreateList() {
     recognition.lang = "ja-JP";
     recognition.interimResults = false;
     recognition.continuous = false;
-    recognition.resultText = ""; // onresultで取得したテキストを保存
     recognitionRef.current = recognition;
 
     recognition.onstart = () => setListening(true);
@@ -152,26 +155,16 @@ export function CreateList() {
       const text = event.results[0][0].transcript;
       setListening(false);
       setRecognizing(true);
-      addItemWithGemini(text); // onresultで直接Geminiを呼ぶ
+      addItemWithGemini(text);
     };
     recognition.onend = () => {
-      // 発言終了をユーザーに伝える（onresultが来なかった場合も含む）
-      setListening(false);
-      setRecognizing(true);
+      // 何もしない
     };
     recognition.onerror = () => {
       setListening(false);
       setRecognizing(false);
     };
     recognition.start();
-  };
-
-  // ボタンを離したらstop()を呼ぶ → onendが発火してGeminiに送信
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      setRecognizing(true);
-      recognitionRef.current.stop();
-    }
   };
 
   const checkedCount = items.filter((i) => i.checked).length;
@@ -203,15 +196,11 @@ export function CreateList() {
             ) : (
               <button
                 className={`voice-btn ${listening ? "listening" : ""}`}
-                onTouchStart={(e) => { e.preventDefault(); startListening(); }}
-                onTouchEnd={(e) => { e.preventDefault(); stopListening(); }}
-                onMouseDown={startListening}
-                onMouseUp={stopListening}
-                onMouseLeave={stopListening}
-                disabled={converting}
+                onClick={toggleListening}
+                disabled={converting || recognizing}
               >
                 <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
-                <span>{listening ? "話しかけてください…" : "押して話す"}</span>
+                <span>{listening ? "話しかけてください…" : "タップして話す"}</span>
               </button>
             )}
             <p className="voice-hint">例：「たまご」「牛乳」「砂糖」</p>
