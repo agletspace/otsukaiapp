@@ -118,6 +118,7 @@ export function CreateList() {
       });
     } finally {
       setConverting(false);
+      setRecognizing(false);
     }
   };
 
