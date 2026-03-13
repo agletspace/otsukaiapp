@@ -149,16 +149,15 @@ export function CreateList() {
 
     recognition.onstart = () => setListening(true);
     recognition.onresult = (event) => {
-      // テキストを保存するだけ
-      recognition.resultText = event.results[0][0].transcript;
+      const text = event.results[0][0].transcript;
+      setListening(false);
+      setRecognizing(true);
+      addItemWithGemini(text); // onresultで直接Geminiを呼ぶ
     };
     recognition.onend = () => {
+      // 発言終了をユーザーに伝える（onresultが来なかった場合も含む）
       setListening(false);
-      setRecognizing(false);
-      // 保存されたテキストがあればGeminiに送信
-      if (recognition.resultText) {
-        addItemWithGemini(recognition.resultText);
-      }
+      setRecognizing(true);
     };
     recognition.onerror = () => {
       setListening(false);
