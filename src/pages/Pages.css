@@ -411,3 +411,31 @@ body {
   text-decoration: line-through;
   color: #999;
 }
+
+/* ─── ローディング表示 ─── */
+.converting-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #40916c;
+}
+
+.spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  font-size: 1.4rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 認識中表示 */
+.converting-indicator.recognizing {
+  color: #b45309;
+}

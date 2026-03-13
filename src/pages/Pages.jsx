@@ -44,6 +44,7 @@ export function CreateList() {
   const [items, setItems] = useState([]);
   const [itemName, setItemName] = useState("");
   const [listening, setListening] = useState(false);
+  const [recognizing, setRecognizing] = useState(false); // 認識中状態
   const [converting, setConverting] = useState(false); // ローディング状態
   const listRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -132,15 +133,8 @@ export function CreateList() {
     );
   };
 
-  const toggleListening = () => {
-    if (listening) {
-      // 録音中にタップしたら停止
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      return;
-    }
-
+  const startListening = () => {
+    if (listening || converting) return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("このブラウザは音声認識に対応していません。Safariをお使いください。");
@@ -152,13 +146,28 @@ export function CreateList() {
     recognition.continuous = false;
     recognitionRef.current = recognition;
     recognition.onstart = () => setListening(true);
-    recognition.onend = () => setListening(false);
+    recognition.onend = () => {
+      setListening(false);
+      setRecognizing(false);
+    };
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript;
+      setRecognizing(false);
       addItemWithGemini(text);
     };
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = () => {
+      setListening(false);
+      setRecognizing(false);
+    };
     recognition.start();
+  };
+
+  // ボタンを離したら認識中状態にして結果を待つ
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      setRecognizing(true);
+      recognitionRef.current.stop();
+    }
   };
 
   const checkedCount = items.filter((i) => i.checked).length;
@@ -182,14 +191,21 @@ export function CreateList() {
                 <span className="spinner">⏳</span>
                 <span>追加中...</span>
               </div>
+            ) : recognizing ? (
+              <div className="converting-indicator recognizing">
+                <span className="spinner">🎙</span>
+                <span>認識中...</span>
+              </div>
             ) : (
               <button
                 className={`voice-btn ${listening ? "listening" : ""}`}
-                onClick={toggleListening}
+                onPointerDown={startListening}
+                onPointerUp={stopListening}
+                onPointerLeave={stopListening}
                 disabled={converting}
               >
                 <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
-                <span>{listening ? "タップして停止" : "タップして話す"}</span>
+                <span>{listening ? "話しかけてください…" : "押して話す"}</span>
               </button>
             )}
             <p className="voice-hint">例：「たまご」「牛乳」「砂糖」</p>
