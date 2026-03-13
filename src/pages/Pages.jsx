@@ -132,7 +132,15 @@ export function CreateList() {
     );
   };
 
-  const startListening = () => {
+  const toggleListening = () => {
+    if (listening) {
+      // 録音中にタップしたら停止
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      return;
+    }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("このブラウザは音声認識に対応していません。Safariをお使いください。");
@@ -144,22 +152,13 @@ export function CreateList() {
     recognition.continuous = false;
     recognitionRef.current = recognition;
     recognition.onstart = () => setListening(true);
-    recognition.onend = () => {
-      setListening(false);
-    };
+    recognition.onend = () => setListening(false);
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript;
       addItemWithGemini(text);
     };
     recognition.onerror = () => setListening(false);
     recognition.start();
-  };
-
-  // ボタンを離したら録音停止してGemini変換を待つ
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
   };
 
   const checkedCount = items.filter((i) => i.checked).length;
@@ -186,13 +185,11 @@ export function CreateList() {
             ) : (
               <button
                 className={`voice-btn ${listening ? "listening" : ""}`}
-                onPointerDown={startListening}
-                onPointerUp={stopListening}
-                onPointerLeave={stopListening}
+                onClick={toggleListening}
                 disabled={converting}
               >
                 <span className="voice-icon">{listening ? "🔴" : "🎤"}</span>
-                <span>{listening ? "話しかけてください…" : "押して話す"}</span>
+                <span>{listening ? "タップして停止" : "タップして話す"}</span>
               </button>
             )}
             <p className="voice-hint">例：「たまご」「牛乳」「砂糖」</p>
