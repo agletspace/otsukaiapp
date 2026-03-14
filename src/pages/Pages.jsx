@@ -159,7 +159,9 @@ export function CreateList() {
       addItemWithGemini(text);
     };
     recognition.onend = () => {
-      // 何もしない
+      setListening(false);
+      // convertingがfalseの場合のみrecognizingをリセット
+      // （addItemWithGeminiがまだ実行中の場合はそちらのfinallyでリセットされる）
     };
     recognition.onerror = () => {
       setListening(false);
